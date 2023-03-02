@@ -54,7 +54,7 @@ stages:
   - job: 'Devjob'
     displayName: 'developement job'
     pool:
-      vmimage: 'windows-latest'
+      vmImage: 'windows-latest'
     variables:
 
     steps:
@@ -80,7 +80,7 @@ stages:
   - job: 'qajob'
     displayName: 'qa job'
     pool:
-      vmimage: 'windows-latest'
+      vmImage: 'windows-latest'
     variables:
 
     steps:
