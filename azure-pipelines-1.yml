@@ -55,7 +55,7 @@ stages:
     displayName: 'developement job'
     pool:
       vmImage: 'windows-latest'
-    variables:
+    
 
     steps:
     - task: DownloadBuildArtifacts@1
@@ -81,7 +81,7 @@ stages:
     displayName: 'qa job'
     pool:
       vmImage: 'windows-latest'
-    variables:
+    
 
     steps:
     - task: DownloadBuildArtifacts@1
@@ -107,7 +107,7 @@ stages:
     displayName: 'production job'
     pool:
       vmimage: 'windows-latest'
-    variables:
+    
 
     steps:
     - task: DownloadBuildArtifacts@1
