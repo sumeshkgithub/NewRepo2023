@@ -1,0 +1,126 @@
+# ASP.NET
+# Build and test ASP.NET projects.
+# Add steps that publish symbols, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
+
+trigger:
+- none
+
+stages:
+- stage: 'Buildstage'
+  displayName: 'Build stage'
+  jobs:
+  - job: 'Buildjob'
+    displayName: 'Build job'
+    pool:
+      vmImage: 'windows-latest'
+
+    variables:
+      solution: '**/*.sln'
+      buildPlatform: 'Any CPU'
+      buildConfiguration: 'Release'
+
+    steps:
+    - task: NuGetToolInstaller@1
+
+    - task: NuGetCommand@2
+      displayName: 'Restore'
+      inputs:
+        restoreSolution: '$(solution)'
+
+    - task: VSBuild@1
+      displayName: 'Build'
+      inputs:
+        solution: '$(solution)'
+        msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+
+    - task: VSTest@2
+      inputs:
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+    - task: PublishPipelineArtifact@1
+      displayName: 'Save Artifact'
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)'
+        artifact: 'Drop'
+        publishLocation: 'Pipeline'
+
+- stage: 'Devstage'
+  displayName: 'Developement Stage'
+  dependsOn: 'Buildstage'
+  jobs:
+  - job: 'Devjob'
+    displayName: 'developement job'
+    pool:
+      vmimage: 'windows-latest'
+    variables:
+
+    steps:
+    - task: DownloadBuildArtifacts@1
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'Drop'
+        downloadPath: '$(System.ArtifactsDirectory)'
+        
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'Azure subscription 1 (355ccad0-a698-48af-8c09-415205f9c235)'
+        appType: 'webApp'
+        WebAppName: 'mywebappgouri-dev'
+        packageForLinux: '$(System.ArtifactsDirectory)/**/*.zip'
+
+- stage: 'QAstage'
+  displayName: 'QA Stage'
+  dependsOn: 'Devstage'
+  jobs:
+  - job: 'qajob'
+    displayName: 'qa job'
+    pool:
+      vmimage: 'windows-latest'
+    variables:
+
+    steps:
+    - task: DownloadBuildArtifacts@1
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'Drop'
+        downloadPath: '$(System.ArtifactsDirectory)'
+        
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'Azure subscription 1 (355ccad0-a698-48af-8c09-415205f9c235)'
+        appType: 'webApp'
+        WebAppName: 'mywebappgouri-qa'
+        packageForLinux: '$(System.ArtifactsDirectory)/**/*.zip'
+
+- stage: 'prodstage'
+  displayName: 'Production Stage'
+  dependsOn: 'QAstage'
+  jobs:
+  - job: 'prodjob'
+    displayName: 'production job'
+    pool:
+      vmimage: 'windows-latest'
+    variables:
+
+    steps:
+    - task: DownloadBuildArtifacts@1
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'Drop'
+        downloadPath: '$(System.ArtifactsDirectory)'
+        
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'Azure subscription 1 (355ccad0-a698-48af-8c09-415205f9c235)'
+        appType: 'webApp'
+        WebAppName: 'mywebappgouri'
+        packageForLinux: '$(System.ArtifactsDirectory)/**/*.zip'
